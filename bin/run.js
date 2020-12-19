@@ -1,53 +1,88 @@
 #!/usr/bin/env node
+const runUpload = require('../src/index');
 
-const path = require('path');
-const minimist = require('minimist');
-const { sftpUplFile, sftpUplDir } = require('./sftp');
-const { ftpUplFile, ftpUplDir } = require('./ftp');
+const { Command } = require('commander');
+const program = new Command();
 
-let myhost = {
-    host: '47.56.223.228',
-    port: 22,
-    username: 'root',
-    password: '2020@host'
+program.version('0.1.0', '-v, -V', '显示当前版本');
+program
+    .name('miniupl')
+    .usage('[options]');
+
+program
+    .option('-s --sftp <sftp>', '是否使用sftp协议', true)
+
+    .requiredOption('--ip <ip>', '远程服务器IP必填')
+    .option('--port <port>', '远程端口', '22')
+    .option('--usn --username <username>', '用户名', '')
+    .option('--pwd --password <password>', '登录密码', '')
+
+    .requiredOption('--src <src>', '源文件或目录的路径，必填，可输入多个', '')
+    .requiredOption('--des <des>', '目标路径，必填，只能输入一个', '')
+    .requiredOption('--byParallel <byParallel>', '是否并行上传', true)
+
+    .helpOption('-h, --help', '帮助文档');
+
+let sftpArgv = [
+    '--ip',
+    '47.56.223.228',
+    '--usn',
+    'root',
+    '--pwd',
+    '2020@host',
+    '--src',
+    './bin/*',
+    '--des',
+    '/root/lwj',
+    '--byParallel',
+    true
+];
+
+let ftpArgv = [
+    '--ip',
+    '127.0.0.1',
+    '--port',
+    '21',
+    '--src',
+    './bin/*',
+    '--des',
+    '/root/lwj',
+    '--byParallel',
+    false,
+    '--sftp',
+    false
+];
+
+program.parse([
+    ... process.argv.slice(0, 2),
+    // ... sftpArgv
+    ... ftpArgv
+]);
+
+// program.parse(process.argv);
+
+let {
+    sftp,
+    ip,
+    port,
+    username,
+    password,
+    src,
+    des,
+    byParallel
+} = program;
+
+let params = {
+    sftp,
+    ip,
+    port,
+    username,
+    password,
+    src,
+    des,
+    byParallel
 };
 
-!function run (argv) {
-    if (argv.v || argv.version) {
-        console.log('miniupl version is 0.1.0');
-    } else if (argv.h || argv.help) {
-        console.log('usage:');
-        console.log('-v --version [show version]')
-    } else {
-        let host = {
-            host: argv.host || argv.h || '',
-            port: argv.port || argv.p || '21',
-            username: argv.usr || argv.u || 'root',
-            password: argv.pwd || '',
-        };
+// console.log(params);
 
-        let localPath = argv.src,
-            remotePath = argv.des;
-        let currentPath = process.cwd();
-        if (!localPath) {
-            console.log('缺少本地路径！');
-            return;
-        }
-        if (!remotePath) {
-            console.log('缺少远程路径！');
-            return;
-        }
-
-        if (argv.r) {
-            argv.s ?
-            sftpUplDir(host, path.join(currentPath, localPath), remotePath) :
-            ftpUplDir(host, path.join(currentPath, localPath), remotePath);
-        } else {
-            argv.s ?
-            sftpUplFile(host, path.join(currentPath, localPath), remotePath) :
-            ftpUplFile(host, path.join(currentPath, localPath), remotePath);
-        }
-    }
-}(minimist(process.argv.slice(2)));
-
-
+runUpload(params);
