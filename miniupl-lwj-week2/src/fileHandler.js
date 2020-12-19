@@ -57,9 +57,6 @@ function createGlobList (localPath, remotePath) {
     localPath = formatPath(localPath);
     let localFiles = glob.sync(localPath);
 
-    let localDir = path.parse(localPath).der;
-    console.log(localDir);
-    
     let res = [];
     localFiles.forEach(filePath => {
         if (isDirectory(filePath)) {
@@ -67,7 +64,7 @@ function createGlobList (localPath, remotePath) {
         } else {
             let relativePath = path.relative(localPath, filePath);
 
-            // todo 目录这里有点 bug，需要保持原有的目录结构
+            // todo 目录这里有点bug，需要保持原有的目录结构
             res.push({
                 src: filePath,
                 des: path.join(remotePath, path.parse(relativePath).base)
