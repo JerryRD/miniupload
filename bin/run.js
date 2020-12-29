@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-const runUpload = require('../src/index');
+const MiniUpl = require('../index');
 
 const { Command } = require('commander');
 const program = new Command();
@@ -10,7 +10,7 @@ program
     .usage('[options]');
 
 program
-    .option('-s --sftp <sftp>', '是否使用sftp协议', true)
+    .option('--protocol <protocol>', '使用的上传协议', 'sftp')
 
     .requiredOption('--ip <ip>', '远程服务器IP必填')
     .option('--port <port>', '远程端口', '22')
@@ -49,20 +49,20 @@ let ftpArgv = [
     '/root/lwj',
     '--byParallel',
     false,
-    '--sftp',
-    false
+    '--protocol',
+    'ftp'
 ];
 
 program.parse([
     ... process.argv.slice(0, 2),
-    // ... sftpArgv
-    ... ftpArgv
+    ... sftpArgv
+    // ... ftpArgv
 ]);
 
 // program.parse(process.argv);
 
 let {
-    sftp,
+    protocol,
     ip,
     port,
     username,
@@ -73,7 +73,7 @@ let {
 } = program;
 
 let params = {
-    sftp,
+    protocol,
     ip,
     port,
     username,
@@ -83,6 +83,5 @@ let params = {
     byParallel
 };
 
-// console.log(params);
-
-runUpload(params);
+let uploader = new MiniUpl(params);
+uploader.upload();

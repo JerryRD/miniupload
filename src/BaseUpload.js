@@ -1,45 +1,18 @@
 const EventEmitter = require('events').EventEmitter;
 const _ = require('lodash');
-const path = require('path');
-const {formatPath} = require('./fileHandler');
-
+const logger = require('../utils/logger');
 module.exports = class BaseUpload {
     constructor(config) {
         this.setHostConfig(config);
-        this.eventEmitter = new EventEmitter();
+        this.emitter = new EventEmitter();
     }
 
-    createClient () {
-
-    }
-
-    connectHost () {
-        return false;
-    }
-
-    putSingleFile (client, uploadingFile) {
-        return new Promise();
-    }
-
-    disconnect () {}
-
-    checkHostConfigs (configs) {
-        configs = configs || {};
-        let requires = ['ip', 'port'],
-            sftpRequires = ['username', 'password'];
-        if (configs.sftp) {
-            requires = requires.concat(sftpRequires);
-        }
-
-        let hasRequires = true;
-        requires.forEach(item => {
-            hasRequires = hasRequires && !!configs[item];
-        });
-        return hasRequires;
-    }
-
+    /**
+     * 设置连接参数
+     * @param config
+     */
     setHostConfig (config) {
-        if (!this.checkHostConfigs(config)) {
+        if (!this._checkHostConfigs(config)) {
             this.hostConfig = {};
             return;
         }
@@ -53,65 +26,147 @@ module.exports = class BaseUpload {
         };
     }
 
+    /**
+     * 获取连接参数
+     * @returns {{}|{password: *, port: *, host: (string|string), sftp: boolean, byParallel: boolean, username: *}|*}
+     */
     getHostConfig () {
+        let propertyName = arguments[0];
+        if (typeof propertyName === 'string') {
+            return this.hostConfig[propertyName];
+        }
         return _.cloneDeep(this.hostConfig) || {};
     }
 
-    shouldUpload (file) {
+    /**
+     * 创建连接器，子类必须实现
+     * @private
+     */
+    _createClient () {}
+
+    /**
+     * 连接服务器，子类必须实现
+     * @private
+     */
+    _connectHost () {}
+
+    /**
+     * 上传单个文件，子类必须实现
+     * @private
+     */
+    _putSingleFile (client, uploadingFile) {}
+
+    /**
+     * 断开连接，子类必须实现
+     * @private
+     */
+    _disconnect () {}
+
+    /**
+     * 配置校验，子类必须实现
+     * @private
+     */
+    _checkHostConfigs () {
+        return false;
+    }
+
+    /**
+     * 创建远程目录，子类必须实现
+     * @private
+     */
+    _createRemoteDir() {}
+
+    /**
+     * 上传前的参数校验
+     * @param file
+     * @returns {boolean|string|*}
+     * @private
+     */
+    _shouldUpload (file) {
         return !!file && !!file.src && file.des;
     }
 
-    // 单文件上传
-    async uploadSingleFile (uploadingFile) {
-        let uploadClient = this.createClient();
-        if (! this.shouldUpload(uploadingFile)) {
+    /**
+     * 上传单个文件
+     * @param uploadingFile
+     * @returns {Promise<boolean|void>}
+     * @private
+     */
+    async _uploadSingleFile (uploadingFile) {
+        let uploadClient = this._createClient();
+        if (! this._shouldUpload(uploadingFile)) {
             return false;
         }
 
-        console.log()
-        if (! await this.createRemoteDir(uploadClient, uploadingFile.des)) {
+        let {src, des} = uploadingFile;
+        if (! await this._createRemoteDir(uploadClient, des)) {
             return false;
         }
 
-        return this.putSingleFile(uploadClient, uploadingFile)
+        logger.info(`开始上传 ${src}`);
+        this.emitter.emit('singleFileStart', uploadingFile);
+        return this._putSingleFile(uploadClient, uploadingFile)
             .then(() => {
-                console.log(`${uploadingFile.src}上传成功`);
+                this.emitter.emit('singleFileSuccess', uploadingFile);
+                logger.info(`${src} 成功上传至 ${des}`);
             })
             .catch(e => {
-                console.log(e);
+                this.emitter.emit('singleFileFaile', e, uploadingFile);
+                logger.error(`${src} 上传至 ${des} 失败`, e);
             });
     }
 
-    // 串行
-    async uploadFileListBySerial (fileList) {
+    /**
+     * 串行上传
+     * @param fileList
+     * @returns {Promise<void>}
+     * @private
+     */
+    async _uploadFileListBySerial (fileList) {
+        logger.info('开始上传');
+        this.emitter.emit('serialStart', fileList);
         for(let i = 0; i < fileList.length; ++ i) {
             try {
-                await this.uploadSingleFile(fileList[i]);
+                await this._uploadSingleFile(fileList[i]);
             } catch (e) {
-                console.log(e)
+                logger.error(e);
             }
         }
+        this.emitter.emit('serialFinish', fileList);
+        logger.info('上传已经全部完成');
     }
 
-    // 并行
-    async uploadFileListByParallel (fileList) {
+    /**
+     * 并行上传
+     * @param fileList
+     * @returns {Promise<unknown[]>}
+     * @private
+     */
+    async _uploadFileListByParallel (fileList) {
+        logger.info('开始上传');
+        this.emitter.emit('parallelStart', fileList);
         return Promise.all(fileList.map(file => {
-            return this.uploadSingleFile(file);
+            return this._uploadSingleFile(file);
         }));
     }
 
+    /**
+     * 执行上传
+     * @param fileList
+     * @returns {Promise<boolean>}
+     */
     async upload (fileList) {
-        if (! await this.connectHost()) {
-            console.log('connect failed');
+        if (! await this._connectHost()) {
+            logger.error('远程服务器连接失败！');
             return false;
         }
-
-        console.log(fileList)
-        if (this.getHostConfig().byParallel) {
-            await this.uploadFileListByParallel(fileList);
+        logger.info('远程服务器连接成功！');
+        let byParallel = this.getHostConfig('byParallel');
+        if (byParallel) {
+            await this._uploadFileListByParallel(fileList);
         } else {
-            await this.uploadFileListBySerial(fileList);
+            await this._uploadFileListBySerial(fileList);
         }
-        await this.disconnect();
+        await this._disconnect();
     }
 }

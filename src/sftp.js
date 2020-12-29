@@ -1,32 +1,48 @@
-'use strict';
-const Client = require('ssh2-sftp-client');
+const SfpClient = require('ssh2-sftp-client');
+const path = require('path');
 const BaseUpload = require('./BaseUpload');
-const {formatPath} = require('./fileHandler');
+const {formatPath} = require('../utils/fileHandler');
+const logger = require('../utils/logger');
 class SftpUpload extends BaseUpload {
     constructor(props) {
         super(props);
-        this.createClient();
+        this._createClient();
     }
 
-    createClient () {
+    _createClient () {
         if(!this.uploadClient) {
-            this.uploadClient = new Client();
+            this.uploadClient = new SfpClient();
         }
         return this.uploadClient;
     }
 
-    async connectHost () {
-        let uploadClient = this.createClient();
+    _checkHostConfigs (configs) {
+        configs = configs || {};
+        let requires = ['ip', 'port', 'username', 'password'];
+        let hasRequires = true;
+        requires.forEach(item => {
+            hasRequires = hasRequires && !!configs[item];
+        });
+        return hasRequires;
+    }
+
+    async _connectHost () {
+        let uploadClient = this._createClient(),
+            hostName = this.getHostConfig('host');
         try {
+            this.emitter.emit('startConnect');
             await uploadClient.connect(this.getHostConfig());
+            logger.info(`远程服务器 ${hostName} 连接成功`);
+            this.emitter.emit('connectSuccess');
             return true;
         } catch (e) {
-            console.error('connect Error!');
+            this.emitter.emit('connectFailed');
+            logger.error(`远程服务器 ${hostName} 连接失败，退出上传`, e);
             return false;
         }
     }
 
-    async createRemoteDir (client, remoteDirPath) {
+    async _createRemoteDir (client, remoteDirPath) {
         if (!client) {
             return false;
         }
@@ -35,18 +51,21 @@ class SftpUpload extends BaseUpload {
             await client.mkdir(formatPath(dirpath), true);
             return true;
         } catch (e) {
-            console.log(e)
+            e && logger.error(`远程目录 ${remoteDirPath} 创建失败`, e);
             return false;
         }
     }
 
-    putSingleFile (client, uploadingFile) {
-        console.log(`${uploadingFile.src}开始上传`);
-        return client.fastPut(uploadingFile.src, formatPath(uploadingFile.des));
+    _putSingleFile (client, uploadingFile) {
+        let {src, des} = uploadingFile;
+        return client.fastPut(src, formatPath(des));
     }
 
-    disconnect () {
+    _disconnect () {
         this.uploadClient.end();
+        delete this.uploadClient;
+        this.emitter.emit('disconnect');
+        logger.info(`远程服务器 ${this.getHostConfig('host')} 连接已断开`);
     }
 }
 
