@@ -1,5 +1,6 @@
 #!/usr/bin/env node
-const MiniUpl = require('../index');
+const {MiniUpl} = require('../index');
+const Ftp = require('../src/ftp');
 
 const { Command } = require('commander');
 const program = new Command();
@@ -12,12 +13,12 @@ program
 program
     .option('--protocol <protocol>', '使用的上传协议', 'sftp')
 
-    .requiredOption('--ip <ip>', '远程服务器IP必填')
+    .requiredOption('--ip <ip>', '远程服务器IP，必填')
     .option('--port <port>', '远程端口', '22')
     .option('--usn --username <username>', '用户名', '')
     .option('--pwd --password <password>', '登录密码', '')
 
-    .requiredOption('--src <src>', '源文件或目录的路径，必填，可输入多个', '')
+    .requiredOption('--src <src>', '源文件或目录的路径，必填', '')
     .requiredOption('--des <des>', '目标路径，必填，只能输入一个', '')
     .requiredOption('--byParallel <byParallel>', '是否并行上传', true)
 
@@ -55,8 +56,8 @@ let ftpArgv = [
 
 program.parse([
     ... process.argv.slice(0, 2),
-    ... sftpArgv
-    // ... ftpArgv
+    // ... sftpArgv
+    ... ftpArgv
 ]);
 
 // program.parse(process.argv);
@@ -83,5 +84,5 @@ let params = {
     byParallel
 };
 
-let uploader = new MiniUpl(params);
-uploader.upload();
+let uploader = new Ftp(params);
+uploader.list();

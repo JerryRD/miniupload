@@ -23,30 +23,30 @@
         <div class='clearfix'>
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">86.27% </span>
+                <span class="strong">87.72% </span>
                 <span class="quiet">Statements</span>
-                <span class='fraction'>44/51</span>
+                <span class='fraction'>50/57</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">76.47% </span>
+                <span class="strong">71.43% </span>
                 <span class="quiet">Branches</span>
-                <span class='fraction'>13/17</span>
+                <span class='fraction'>15/21</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">64.71% </span>
+                <span class="strong">66.67% </span>
                 <span class="quiet">Functions</span>
-                <span class='fraction'>11/17</span>
+                <span class='fraction'>12/18</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">86% </span>
+                <span class="strong">87.5% </span>
                 <span class="quiet">Lines</span>
-                <span class='fraction'>43/50</span>
+                <span class='fraction'>49/56</span>
             </div>
         
             
@@ -228,9 +228,29 @@
 <a name='L169'></a><a href='#L169'>169</a>
 <a name='L170'></a><a href='#L170'>170</a>
 <a name='L171'></a><a href='#L171'>171</a>
-<a name='L172'></a><a href='#L172'>172</a></td><td class="line-coverage quiet"><span class="cline-any cline-yes">4x</span>
+<a name='L172'></a><a href='#L172'>172</a>
+<a name='L173'></a><a href='#L173'>173</a>
+<a name='L174'></a><a href='#L174'>174</a>
+<a name='L175'></a><a href='#L175'>175</a>
+<a name='L176'></a><a href='#L176'>176</a>
+<a name='L177'></a><a href='#L177'>177</a>
+<a name='L178'></a><a href='#L178'>178</a>
+<a name='L179'></a><a href='#L179'>179</a>
+<a name='L180'></a><a href='#L180'>180</a>
+<a name='L181'></a><a href='#L181'>181</a>
+<a name='L182'></a><a href='#L182'>182</a>
+<a name='L183'></a><a href='#L183'>183</a>
+<a name='L184'></a><a href='#L184'>184</a>
+<a name='L185'></a><a href='#L185'>185</a>
+<a name='L186'></a><a href='#L186'>186</a>
+<a name='L187'></a><a href='#L187'>187</a>
+<a name='L188'></a><a href='#L188'>188</a>
+<a name='L189'></a><a href='#L189'>189</a>
+<a name='L190'></a><a href='#L190'>190</a></td><td class="line-coverage quiet"><span class="cline-any cline-yes">4x</span>
 <span class="cline-any cline-yes">4x</span>
 <span class="cline-any cline-yes">4x</span>
+<span class="cline-any cline-yes">4x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-yes">4x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-yes">6x</span>
@@ -261,6 +281,8 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-yes">10x</span>
 <span class="cline-any cline-yes">10x</span>
 <span class="cline-any cline-yes">6x</span>
@@ -387,6 +409,20 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-yes">3x</span>
+<span class="cline-any cline-yes">3x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">3x</span>
+<span class="cline-any cline-yes">3x</span>
+<span class="cline-any cline-yes">3x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">3x</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -402,6 +438,8 @@
 <span class="cline-any cline-neutral">&nbsp;</span></td><td class="text"><pre class="prettyprint lang-js">const EventEmitter = require('events').EventEmitter;
 const _ = require('lodash');
 const logger = require('../utils/logger');
+const {getUploadList} = require('../utils/fileHandler');
+&nbsp;
 module.exports = class BaseUpload {
     constructor(config) {
         this.setHostConfig(config);
@@ -423,7 +461,9 @@ module.exports = class BaseUpload {
             username: config.username,
             password: config.password,
             sftp: !!config.sftp,
-            byParallel: !!config.byParallel
+            byParallel: !!config.byParallel,
+            src: config.src || <span class="branch-1 cbranch-no" title="branch not covered" >'',</span>
+            des: config.des || <span class="branch-1 cbranch-no" title="branch not covered" >''</span>
         };
     }
 &nbsp;
@@ -552,11 +592,25 @@ module.exports = class BaseUpload {
     }
 &nbsp;
     /**
+     * 获取文件上传列表
+     * @returns {*[]}
+     * @private
+     */
+    _getUploadList () {
+        let {src, des} = this.hostConfig;
+        return getUploadList(src, des);
+    }
+&nbsp;
+    /**
      * 执行上传
      * @param fileList
      * @returns {Promise&lt;boolean&gt;}
      */
-    async upload (fileList) {
+    async upload () {
+        let fileList = this._getUploadList();
+        logger.info(`开始上传，上传参数为：`, JSON.stringify(this.config, null, 4));
+        logger.info(`上传列表为：`, JSON.stringify(fileList, null, 4));
+&nbsp;
         <span class="missing-if-branch" title="if path not taken" >I</span>if (! await this._connectHost()) {
 <span class="cstat-no" title="statement not covered" >            logger.error('远程服务器连接失败！');</span>
 <span class="cstat-no" title="statement not covered" >            return false;</span>
@@ -577,7 +631,7 @@ module.exports = class BaseUpload {
             <div class='footer quiet pad2 space-top1 center small'>
                 Code coverage generated by
                 <a href="https://istanbul.js.org/" target="_blank">istanbul</a>
-                at Wed Dec 30 2020 01:15:52 GMT+0800 (GMT+08:00)
+                at Wed Dec 30 2020 13:30:13 GMT+0800 (GMT+08:00)
             </div>
         </div>
         <script src="../../prettify.js"></script>

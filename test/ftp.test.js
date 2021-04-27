@@ -1,4 +1,4 @@
-const Ftp = require('../src/ftp');
+const {Ftp} = require('../index');
 const defaultConfig = require('../utils/defaults');
 const fileHandler = require('../utils/fileHandler');
 const logger = require('../utils/logger');

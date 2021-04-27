@@ -1,3 +1,4 @@
+
 const FtpClient = require('ftp');
 const path = require('path');
 const BaseUpload = require('./BaseUpload');
@@ -8,6 +9,14 @@ class FtpUpload extends BaseUpload {
     constructor(props) {
         super(props);
         this._createClient();
+    }
+
+    list () {
+        this.uploadClient.list('/', function(err, list) {
+            if (err) throw err;
+            console.dir(list);
+            c.end();
+          });
     }
 
     _createClient () {

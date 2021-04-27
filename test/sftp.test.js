@@ -1,4 +1,4 @@
-const Sftp = require('../src/sftp');
+const {Sftp} = require('../index');
 const defaultConfig = require('../utils/defaults');
 const fileHandler = require('../utils/fileHandler');
 

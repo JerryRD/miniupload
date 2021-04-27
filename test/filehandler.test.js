@@ -1,5 +1,4 @@
 const fileHandler = require('../utils/fileHandler');
-const logger = require('../utils/logger');
 const {
     formatPath,
     loaclPathExits,

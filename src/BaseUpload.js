@@ -1,6 +1,8 @@
 const EventEmitter = require('events').EventEmitter;
 const _ = require('lodash');
 const logger = require('../utils/logger');
+const {getUploadList} = require('../utils/fileHandler');
+
 module.exports = class BaseUpload {
     constructor(config) {
         this.setHostConfig(config);
@@ -22,7 +24,9 @@ module.exports = class BaseUpload {
             username: config.username,
             password: config.password,
             sftp: !!config.sftp,
-            byParallel: !!config.byParallel
+            byParallel: !!config.byParallel,
+            src: config.src || '',
+            des: config.des || ''
         };
     }
 
@@ -124,7 +128,6 @@ module.exports = class BaseUpload {
      */
     async _uploadFileListBySerial (fileList) {
         logger.info('开始上传');
-        this.emitter.emit('serialStart', fileList);
         for(let i = 0; i < fileList.length; ++ i) {
             try {
                 await this._uploadSingleFile(fileList[i]);
@@ -132,7 +135,6 @@ module.exports = class BaseUpload {
                 logger.error(e);
             }
         }
-        this.emitter.emit('serialFinish', fileList);
         logger.info('上传已经全部完成');
     }
 
@@ -144,10 +146,19 @@ module.exports = class BaseUpload {
      */
     async _uploadFileListByParallel (fileList) {
         logger.info('开始上传');
-        this.emitter.emit('parallelStart', fileList);
         return Promise.all(fileList.map(file => {
             return this._uploadSingleFile(file);
         }));
+    }
+
+    /**
+     * 获取文件上传列表
+     * @returns {*[]}
+     * @private
+     */
+    _getUploadList () {
+        let {src, des} = this.hostConfig;
+        return getUploadList(src, des);
     }
 
     /**
@@ -155,18 +166,24 @@ module.exports = class BaseUpload {
      * @param fileList
      * @returns {Promise<boolean>}
      */
-    async upload (fileList) {
+    async upload () {
+        let fileList = this._getUploadList();
+        logger.info(`开始上传，上传参数为：`, JSON.stringify(this.config, null, 4));
+        logger.info(`上传列表为：`, JSON.stringify(fileList, null, 4));
+
         if (! await this._connectHost()) {
             logger.error('远程服务器连接失败！');
             return false;
         }
         logger.info('远程服务器连接成功！');
         let byParallel = this.getHostConfig('byParallel');
+        this.emitter.emit('startUpload', fileList);
         if (byParallel) {
             await this._uploadFileListByParallel(fileList);
         } else {
             await this._uploadFileListBySerial(fileList);
         }
+        this.emitter.emit('uploadFinish', fileList);
         await this._disconnect();
     }
 }
